@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(node.exe --version)",
+      "Bash(D:/Tools/node.exe --version)",
+      "Bash(D:/Tools/npm.cmd --version)",
+      "Bash(D:/Tools/npm.cmd install:*)",
+      "Bash(D:/Tools/node.exe scripts/install-apply.js --profile full)",
+      "Bash(psql --version)"
+    ]
+  }
+}
