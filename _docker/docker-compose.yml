@@ -1,0 +1,81 @@
+networks:
+  autome:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+      driver: default
+
+services:
+  autome-nginx:
+    image: nginx:stable-alpine
+    container_name: autome-nginx
+    ports:
+      - "8080:80"
+      - "443:443"
+    volumes:
+      - ./../:/var/www/html/
+      - ./services/nginx/log:/var/log/nginx
+      - ./services/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - autome-app
+      - autome-postgres
+    hostname: autome-nginx
+    extra_hosts:
+      - 'autome-postgres:172.30.0.57'
+      - 'autome-app:172.30.0.100'
+    networks:
+      autome:
+        ipv4_address: 172.30.0.80
+
+  autome-postgres:
+    image: postgres:16-alpine
+    container_name: autome-postgres
+    environment:
+      POSTGRES_DB: "autome_db"
+      POSTGRES_USER: "autome"
+      POSTGRES_PASSWORD: "autome"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    hostname: autome-postgres
+    extra_hosts:
+      - 'autome-nginx:172.30.0.80'
+      - 'autome-app:172.30.0.100'
+    networks:
+      autome:
+        ipv4_address: 172.30.0.57
+
+  autome-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autome-app
+    volumes:
+      - ./../:/var/www/html/
+    ports:
+      - "9080:9000"
+    depends_on:
+      - autome-postgres
+      - autome-redis
+    working_dir: /var/www/html
+    hostname: autome-app
+    extra_hosts:
+      - 'autome-nginx:172.30.0.80'
+      - 'autome-postgres:172.30.0.57'
+    networks:
+      autome:
+        ipv4_address: 172.30.0.100
+    environment:
+        - REDIS_HOST=autome-redis
+        - REDIS_PORT=6379
+
+  autome-redis:
+    image: redis:alpine
+    container_name: autome-redis
+    ports:
+      - "6379:6379"
+    networks:
+      autome:
+        ipv4_address: 172.30.0.200
